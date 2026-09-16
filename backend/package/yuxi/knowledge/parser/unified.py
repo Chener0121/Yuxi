@@ -187,7 +187,10 @@ async def parse_resolved_document(source: str, params: dict | None = None) -> st
         elif file_ext == ".csv":
             result = await asyncio.to_thread(_convert_csv_to_markdown, file_path_obj)
 
-        elif file_ext in [".xls", ".xlsx"]:
+        elif file_ext == ".xls":
+            result = await asyncio.to_thread(_convert_xls_to_markdown, file_path_obj)
+
+        elif file_ext == ".xlsx":
             result = await asyncio.to_thread(_convert_with_docling, file_path_obj, params=params)
 
         elif file_ext == ".json":
@@ -378,3 +381,18 @@ def _convert_csv_to_markdown(file_path: Path) -> str:
         row_dataframe = dataframe.iloc[[i]]
         tables.append(row_dataframe.to_markdown(index=False))
     return "\n\n".join(tables)
+
+
+def _convert_xls_to_markdown(file_path: Path) -> str:
+    """使用 pandas + xlrd 解析旧版 .xls 文件并转为 Markdown（Docling 不支持该格式）。"""
+    import pandas as pd
+
+    sheet_map = pd.read_excel(file_path, engine="xlrd", sheet_name=None)
+    blocks: list[str] = []
+    for sheet_name, dataframe in sheet_map.items():
+        if dataframe.empty:
+            continue
+        if len(sheet_map) > 1:
+            blocks.append(f"## {sheet_name}")
+        blocks.append(dataframe.to_markdown(index=False))
+    return "\n\n".join(blocks)
