@@ -26,8 +26,8 @@ from yuxi.services.agent_request_queue_service import (
 )
 from yuxi.services.agent_run_manifest_service import (
     PreparedRunExecution,
-    compute_manifest_fingerprint,
     prepare_run_execution,
+    compute_manifest_fingerprint,
 )
 from yuxi.services.chat_service import get_agent_state_view, stream_agent_chat, stream_agent_resume
 from yuxi.services.input_message_service import restore_chat_input_message
