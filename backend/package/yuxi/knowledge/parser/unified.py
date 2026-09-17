@@ -387,12 +387,15 @@ def _convert_xls_to_markdown(file_path: Path) -> str:
     """使用 pandas + xlrd 解析旧版 .xls 文件并转为 Markdown（Docling 不支持该格式）。"""
     import pandas as pd
 
-    sheet_map = pd.read_excel(file_path, engine="xlrd", sheet_name=None)
+    # 文档提取不假定首行是表头，也不把文本编号和 NA 等字面值转换成分析数据。
+    sheet_map = pd.read_excel(
+        file_path, engine="xlrd", sheet_name=None, header=None, dtype=object, keep_default_na=False
+    )
     blocks: list[str] = []
     for sheet_name, dataframe in sheet_map.items():
         if dataframe.empty:
             continue
         if len(sheet_map) > 1:
             blocks.append(f"## {sheet_name}")
-        blocks.append(dataframe.to_markdown(index=False))
+        blocks.append(dataframe.to_markdown(index=False, headers=[""] * len(dataframe.columns), disable_numparse=True))
     return "\n\n".join(blocks)

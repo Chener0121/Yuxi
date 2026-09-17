@@ -316,12 +316,26 @@ async def test_parse_resolved_document_routes_xls_to_pandas(
 
     monkeypatch.setattr(parser_unified, "_convert_with_docling", _fake_docling)
 
-    markdown = await parser_unified.parse_resolved_document(
-        str(PARSER_FIXTURES / "测试旧表格.xls")
-    )
+    markdown = await parser_unified.parse_resolved_document(str(PARSER_FIXTURES / "测试旧表格.xls"))
 
     assert "Docling Slim" in markdown
     assert not docling_calls
+
+
+async def test_xls_preserves_single_row_text_and_blank_cells() -> None:
+    """真实多 sheet 文件保留单行内容、文本编号与空白，跳过空表。"""
+    markdown = await parser_unified.parse_resolved_document(str(PARSER_FIXTURES / "xls-cell-preservation.xls"))
+
+    assert "## 单行" in markdown
+    assert "## 文本与空白" in markdown
+    assert "## 空表" not in markdown
+    rows = [
+        [cell.strip() for cell in line.strip("|").split("|")] for line in markdown.splitlines() if line.startswith("|")
+    ]
+    assert ["唯一内容", "53"] in rows
+    assert ["编号", "标记", "备注"] in rows
+    assert ["00123", "NA", ""] in rows
+    assert ["00456", "NULL", "保留文本"] in rows
 
 
 def test_slim_office_backend_unloads_after_conversion_error(
